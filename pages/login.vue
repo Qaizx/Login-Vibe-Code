@@ -10,7 +10,7 @@
         <label for="password">Password</label>
         <input id="password" v-model="password" type="password" required />
       </div>
-      <div v-if="error" class="error">{{ error }}</div>
+      <div v-if="prompt" :class="['prompt', promptType]">{{ prompt }}</div>
       <button type="submit">Login</button>
     </form>
     <p>Don't have an account? <NuxtLink to="/register">Register</NuxtLink></p>
@@ -24,23 +24,30 @@ import { useAuth } from '~/composables/useAuth'
 
 const email = ref('')
 const password = ref('')
-const error = ref('')
+const prompt = ref('')
+const promptType = ref('')
 const router = useRouter()
 const { login } = useAuth()
 
 function onLogin() {
-  error.value = ''
+  prompt.value = ''
+  promptType.value = ''
   if (!email.value || !password.value) {
-    error.value = 'Please fill in all fields'
+    prompt.value = 'Please fill in all fields'
+    promptType.value = 'error'
     return
   }
   const result = login(email.value, password.value)
   if (!result.success) {
-    error.value = result.message
+    prompt.value = result.message
+    promptType.value = 'error'
     return
   }
-  alert('Logged in!')
-  router.push('/user')
+  prompt.value = 'Login successful! Redirecting...'
+  promptType.value = 'success'
+  setTimeout(() => {
+    router.push('/user')
+  }, 1200)
 }
 </script>
 
@@ -81,9 +88,21 @@ function onLogin() {
 .login-container button:hover {
   background: #0056b3;
 }
-.error {
-  color: #d32f2f;
+.prompt {
   margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
   text-align: center;
+  font-weight: 500;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.10);
+}
+.prompt.success {
+  background: linear-gradient(90deg, #4ade80 0%, #22d3ee 100%);
+  color: #065f46;
+}
+.prompt.error {
+  background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%);
+  color: #991b1b;
 }
 </style>

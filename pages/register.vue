@@ -30,7 +30,7 @@
         <label for="confirm">Confirm Password</label>
         <input id="confirm" v-model="confirm" type="password" required />
       </div>
-      <div v-if="error" class="error">{{ error }}</div>
+      <div v-if="prompt" :class="['prompt', promptType]">{{ prompt }}</div>
       <button type="submit">Register</button>
     </form>
     <p>Already have an account? <NuxtLink to="/login">Login</NuxtLink></p>
@@ -49,27 +49,35 @@ const dob = ref('')
 const email = ref('')
 const password = ref('')
 const confirm = ref('')
-const error = ref('')
+const prompt = ref('')
+const promptType = ref('')
 const router = useRouter()
 const { register } = useAuth()
 
 function onRegister() {
-  error.value = ''
+  prompt.value = ''
+  promptType.value = ''
   if (!firstname.value || !surname.value || !age.value || !dob.value || !email.value || !password.value || !confirm.value) {
-    error.value = 'Please fill in all fields'
+    prompt.value = 'Please fill in all fields'
+    promptType.value = 'error'
     return
   }
   if (password.value !== confirm.value) {
-    error.value = 'Passwords do not match'
+    prompt.value = 'Passwords do not match'
+    promptType.value = 'error'
     return
   }
   const result = register(email.value, password.value, firstname.value, surname.value, age.value, dob.value)
   if (!result.success) {
-    error.value = result.message
+    prompt.value = result.message
+    promptType.value = 'error'
     return
   }
-  alert('Registered!')
-  router.push('/login')
+  prompt.value = 'Registration successful! Redirecting to login...'
+  promptType.value = 'success'
+  setTimeout(() => {
+    router.push('/login')
+  }, 1200)
 }
 </script>
 
@@ -110,9 +118,21 @@ function onRegister() {
 .register-container button:hover {
   background: #218838;
 }
-.error {
-  color: #d32f2f;
+.prompt {
   margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
   text-align: center;
+  font-weight: 500;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.10);
+}
+.prompt.success {
+  background: linear-gradient(90deg, #4ade80 0%, #22d3ee 100%);
+  color: #065f46;
+}
+.prompt.error {
+  background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%);
+  color: #991b1b;
 }
 </style>

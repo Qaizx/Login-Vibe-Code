@@ -41,7 +41,32 @@
       </ul>
       <div class="user-actions">
         <button v-if="!editMode" class="btn primary" @click="editMode = true">Edit</button>
+        <button v-if="!editMode" class="btn" @click="showPasswordDialog = true">Change Password</button>
         <button class="btn danger" @click="logoutAndGoHome">Logout</button>
+      </div>
+      <div v-if="showPasswordDialog" class="password-dialog">
+        <div class="dialog-content">
+          <h3>Change Password</h3>
+          <form @submit.prevent="changePassword">
+            <div class="form-row">
+              <label for="current">Current Password</label>
+              <input id="current" v-model="currentPassword" type="password" required />
+            </div>
+            <div class="form-row">
+              <label for="new">New Password</label>
+              <input id="new" v-model="newPassword" type="password" required />
+            </div>
+            <div class="form-row">
+              <label for="confirm">Confirm New Password</label>
+              <input id="confirm" v-model="confirmPassword" type="password" required />
+            </div>
+            <div v-if="passwordPrompt" :class="['prompt', passwordPromptType]">{{ passwordPrompt }}</div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Save</button>
+              <button class="btn" type="button" @click="closePasswordDialog">Cancel</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -69,6 +94,12 @@ const user = computed(() => {
 
 const editMode = ref(false)
 const editUser = ref({ firstname: '', surname: '', age: 0, dob: '', email: '' })
+const showPasswordDialog = ref(false)
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordPrompt = ref('')
+const passwordPromptType = ref('')
 
 watch(user, (val) => {
   if (val) {
@@ -105,6 +136,49 @@ function cancelEdit() {
 function logoutAndGoHome() {
   logout()
   router.push('/')
+}
+
+function closePasswordDialog() {
+  showPasswordDialog.value = false
+  currentPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  passwordPrompt.value = ''
+  passwordPromptType.value = ''
+}
+
+function changePassword() {
+  passwordPrompt.value = ''
+  passwordPromptType.value = ''
+  const users = JSON.parse(localStorage.getItem('users') || '[]')
+  const idx = users.findIndex((u: any) => u.email === user.value.email)
+  if (idx === -1) {
+    passwordPrompt.value = 'User not found.'
+    passwordPromptType.value = 'error'
+    return
+  }
+  if (users[idx].password !== currentPassword.value) {
+    passwordPrompt.value = 'Current password is incorrect.'
+    passwordPromptType.value = 'error'
+    return
+  }
+  if (!newPassword.value || !confirmPassword.value) {
+    passwordPrompt.value = 'Please fill in all fields.'
+    passwordPromptType.value = 'error'
+    return
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    passwordPrompt.value = 'New passwords do not match.'
+    passwordPromptType.value = 'error'
+    return
+  }
+  users[idx].password = newPassword.value
+  localStorage.setItem('users', JSON.stringify(users))
+  passwordPrompt.value = 'Password changed successfully!'
+  passwordPromptType.value = 'success'
+  setTimeout(() => {
+    closePasswordDialog()
+  }, 1200)
 }
 </script>
 
@@ -223,5 +297,28 @@ function logoutAndGoHome() {
 }
 .btn.danger:hover {
   background: #dc2626;
+}
+.password-dialog {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 41, 59, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.dialog-content {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 32px 0 rgba(60, 72, 88, 0.18);
+  padding: 2rem 2.5rem 1.5rem 2.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: left;
+}
+.dialog-content h3 {
+  margin-bottom: 1.2rem;
+  text-align: center;
+  color: #22223b;
 }
 </style>
